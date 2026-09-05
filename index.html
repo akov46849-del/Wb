@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ПВЗ - Выдача заказов по QR</title>
+    <title>ПВЗ - Выдача заказов</title>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -18,14 +18,110 @@
             background: #0b0e14;
             color: #e8edf5;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 15px;
         }
         .app {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 1100px;
+            width: 100%;
+            background: #141a26;
+            border-radius: 28px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            min-height: 600px;
+            position: relative;
         }
 
-        /* --- ХЕДЕР --- */
+        /* ========== СТАРТОВОЕ МЕНЮ ========== */
+        #menuScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+            text-align: center;
+        }
+        #menuScreen .logo {
+            font-size: 72px;
+            margin-bottom: 10px;
+        }
+        #menuScreen h1 {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        #menuScreen .sub {
+            font-size: 16px;
+            color: #a0aec0;
+            margin-bottom: 30px;
+            max-width: 400px;
+        }
+        #menuScreen .btn-start {
+            padding: 16px 48px;
+            background: #7c3aed;
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+        #menuScreen .btn-start:hover {
+            background: #6d28d9;
+            transform: scale(1.05);
+        }
+        #menuScreen .btn-start:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #menuScreen .steps {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #menuScreen .steps .step {
+            background: #1f2638;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+            font-size: 14px;
+            color: #a0aec0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #menuScreen .steps .step .num {
+            background: #7c3aed;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* ========== ИГРОВЫЕ ЭКРАНЫ ========== */
+        #gameScreen {
+            display: none;
+        }
+        #gameScreen.active {
+            display: block;
+        }
+
+        /* ХЕДЕР */
         .header {
             display: flex;
             justify-content: space-between;
@@ -33,17 +129,15 @@
             flex-wrap: wrap;
             gap: 10px;
             padding: 15px 20px;
-            background: #141a26;
-            border-radius: 20px;
+            background: #1f2638;
+            border-radius: 16px;
             border: 1px solid #2a3042;
             margin-bottom: 20px;
         }
-        .header h1 {
-            font-size: 22px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #7c3aed, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .header .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e8edf5;
         }
         .header .phase {
             font-size: 13px;
@@ -51,16 +145,13 @@
             border-radius: 40px;
             font-weight: 600;
         }
-        .phase-prep { background: #92400e30; color: #fbbf24; border: 1px solid #fbbf2440; }
+        .phase-waiting { background: #7c3aed30; color: #a855f7; border: 1px solid #a855f740; animation: pulse-border 1.5s ease-in-out infinite; }
         .phase-game { background: #1e40af30; color: #60a5fa; border: 1px solid #60a5fa40; }
         .phase-done { background: #065f4630; color: #34d399; border: 1px solid #34d39940; }
-        .phase-waiting { background: #7c3aed30; color: #a855f7; border: 1px solid #a855f740; animation: pulse-border 1.5s ease-in-out infinite; }
-        
         @keyframes pulse-border {
             0%, 100% { border-color: #a855f740; }
             50% { border-color: #a855f7; }
         }
-        
         .header .stats {
             display: flex;
             gap: 15px;
@@ -72,28 +163,11 @@
             color: #fff;
             font-size: 16px;
         }
-        .header .room-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #1f2638;
-            padding: 4px 14px;
-            border-radius: 12px;
-            border: 1px solid #2a3042;
-            font-size: 13px;
-        }
-        .header .room-info .code {
-            font-size: 22px;
-            font-weight: 800;
-            color: #a855f7;
-            font-family: monospace;
-            letter-spacing: 3px;
-        }
         .header .tsd-status {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: #1f2638;
+            background: #0b0e14;
             padding: 4px 14px;
             border-radius: 12px;
             border: 1px solid #2a3042;
@@ -107,163 +181,112 @@
         }
         .dot-off { background: #4a5568; }
         .dot-on { background: #34d399; animation: pulse-dot 1s ease-in-out infinite; }
-        
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
 
-        /* --- КНОПКИ --- */
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .controls button {
-            padding: 10px 22px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 14px;
-        }
-        .btn-start {
-            background: #7c3aed;
-            color: #fff;
-        }
-        .btn-start:hover:not(:disabled) { background: #6d28d9; transform: scale(1.02); }
-        .btn-start:disabled { opacity: 0.4; cursor: not-allowed; }
-        
-        .btn-generate {
-            background: #1e40af;
-            color: #fff;
-        }
-        .btn-generate:hover:not(:disabled) { background: #1e3a8a; transform: scale(1.02); }
-        .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
-        
-        .btn-reset {
-            background: #2a3042;
-            color: #a0aec0;
-        }
-        .btn-reset:hover { background: #3a4158; }
-
-        /* --- QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА --- */
-        .qr-connect-section {
-            background: #141a26;
-            border: 2px solid #7c3aed;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            text-align: center;
+        /* QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА */
+        #qrConnectScreen {
             display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            background: #1f2638;
+            border-radius: 16px;
+            border: 2px solid #7c3aed;
+            margin-bottom: 20px;
             animation: fadeIn 0.5s ease;
         }
-        .qr-connect-section.show { display: block; }
-        .qr-connect-section.hidden { display: none; }
-        
+        #qrConnectScreen.show {
+            display: flex;
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        .qr-connect-section h2 {
-            font-size: 20px;
-            margin-bottom: 5px;
+        #qrConnectScreen h2 {
+            font-size: 22px;
             color: #60a5fa;
+            margin-bottom: 5px;
         }
-        .qr-connect-section .sub {
+        #qrConnectScreen .sub {
             color: #a0aec0;
-            font-size: 14px;
+            font-size: 15px;
             margin-bottom: 20px;
         }
-        .qr-connect-section .connect-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-        .qr-connect-section .qr-box {
+        #qrConnectScreen .qr-box {
             background: #fff;
             padding: 20px;
             border-radius: 16px;
             display: inline-block;
+            margin-bottom: 15px;
         }
-        .qr-connect-section .qr-box #connect-qrcode {
-            width: 200px;
-            height: 200px;
+        #qrConnectScreen .qr-box #connect-qrcode {
+            width: 220px;
+            height: 220px;
         }
-        .qr-connect-section .connect-info {
-            text-align: left;
-            background: #1f2638;
-            padding: 20px 25px;
-            border-radius: 12px;
-            border: 1px solid #2a3042;
-            min-width: 200px;
+        #qrConnectScreen .room-code {
+            font-size: 18px;
+            color: #a0aec0;
         }
-        .qr-connect-section .connect-info .label {
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .qr-connect-section .connect-info .value {
-            font-size: 32px;
-            font-weight: 800;
-            font-family: monospace;
+        #qrConnectScreen .room-code strong {
+            font-size: 28px;
             color: #a855f7;
-            margin: 5px 0;
+            font-family: monospace;
+            letter-spacing: 3px;
         }
-        .qr-connect-section .connect-info .status-text {
-            font-size: 14px;
+        #qrConnectScreen .status-text {
+            margin-top: 10px;
+            font-size: 16px;
             color: #fbbf24;
-            margin-top: 5px;
         }
-        .qr-connect-section .connect-info .status-text.connected {
+        #qrConnectScreen .status-text.connected {
             color: #34d399;
         }
 
-        /* --- СЕКЦИЯ ВЫДАЧИ КЛИЕНТУ --- */
-        .qr-client-section {
-            background: #141a26;
-            border: 2px solid #2a3042;
+        /* QR ДЛЯ КЛИЕНТА */
+        #qrClientScreen {
+            display: none;
+            background: #1f2638;
             border-radius: 16px;
+            border: 2px solid #2a3042;
             padding: 20px;
             margin-bottom: 20px;
             text-align: center;
-            display: none;
         }
-        .qr-client-section.show { display: block; }
-        .qr-client-section h2 {
+        #qrClientScreen.show {
+            display: block;
+        }
+        #qrClientScreen h2 {
             font-size: 18px;
-            margin-bottom: 5px;
             color: #fbbf24;
+            margin-bottom: 5px;
         }
-        .qr-client-section .sub {
+        #qrClientScreen .sub {
             color: #a0aec0;
             font-size: 14px;
             margin-bottom: 15px;
         }
-        .qr-client-section .qr-container {
+        #qrClientScreen .qr-container {
             display: flex;
             justify-content: center;
             gap: 30px;
             flex-wrap: wrap;
             align-items: center;
         }
-        .qr-client-section .qr-box {
+        #qrClientScreen .qr-box {
             background: #fff;
             padding: 20px;
             border-radius: 16px;
             display: inline-block;
         }
-        .qr-client-section .qr-box #client-qrcode {
+        #qrClientScreen .qr-box #client-qrcode {
             width: 200px;
             height: 200px;
         }
-        .qr-client-section .qr-box.active {
+        #qrClientScreen .qr-box.active {
             animation: pulse 1.5s ease-in-out infinite;
             border: 3px solid #34d399;
         }
@@ -271,45 +294,45 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.03); }
         }
-        .qr-client-section .order-info {
+        #qrClientScreen .order-info {
             text-align: left;
-            background: #1f2638;
+            background: #0b0e14;
             padding: 15px 25px;
             border-radius: 12px;
             border: 1px solid #2a3042;
         }
-        .qr-client-section .order-info .label {
+        #qrClientScreen .order-info .label {
             font-size: 12px;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .qr-client-section .order-info .value {
+        #qrClientScreen .order-info .value {
             font-size: 28px;
             font-weight: 700;
             font-family: monospace;
             color: #a855f7;
             margin: 5px 0;
         }
-        .qr-client-section .order-info .items {
+        #qrClientScreen .order-info .items {
             font-size: 14px;
             color: #a0aec0;
         }
-        .qr-client-section .order-info .items span {
+        #qrClientScreen .order-info .items span {
             display: inline-block;
-            background: #141a26;
+            background: #1f2638;
             padding: 2px 10px;
             border-radius: 6px;
             margin: 2px;
         }
-        .qr-client-section .controls-qr {
+        #qrClientScreen .controls-qr {
             margin-top: 15px;
             display: flex;
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
         }
-        .qr-client-section .controls-qr button {
+        #qrClientScreen .controls-qr button {
             padding: 8px 20px;
             border: none;
             border-radius: 10px;
@@ -324,12 +347,17 @@
         }
         .btn-next-client:hover:not(:disabled) { background: #6d28d9; transform: scale(1.02); }
         .btn-next-client:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-reset-game {
+            background: #2a3042;
+            color: #a0aec0;
+        }
+        .btn-reset-game:hover { background: #3a4158; }
 
-        /* --- СКАНЕР (ТСД) --- */
+        /* СКАНЕР (ТСД) */
         .scanner-panel {
-            background: #141a26;
-            border: 2px solid #2a3042;
+            background: #1f2638;
             border-radius: 16px;
+            border: 1px solid #2a3042;
             padding: 15px 20px;
             margin-bottom: 20px;
         }
@@ -389,32 +417,30 @@
             padding: 8px 14px;
             border-radius: 10px;
             font-size: 14px;
-            background: #1f2638;
+            background: #0b0e14;
             color: #a0aec0;
             min-height: 36px;
         }
         .scanner-panel .status-msg.success { color: #34d399; background: #065f4630; border: 1px solid #34d39940; }
         .scanner-panel .status-msg.error { color: #f87171; background: #7f1d1d30; border: 1px solid #f8717140; }
         .scanner-panel .status-msg.info { color: #60a5fa; background: #1e40af30; border: 1px solid #60a5fa40; }
-        .scanner-panel .status-msg.waiting { color: #fbbf24; background: #92400e30; border: 1px solid #fbbf2440; }
 
-        /* --- СПИСОК ЗАКАЗОВ --- */
+        /* СПИСОК ЗАКАЗОВ */
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
         @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
-
         .panel {
-            background: #141a26;
-            border-radius: 20px;
+            background: #1f2638;
+            border-radius: 16px;
             padding: 18px;
             border: 1px solid #2a3042;
-            min-height: 250px;
+            min-height: 200px;
         }
         .panel h2 {
-            font-size: 15px;
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #8896ab;
@@ -423,15 +449,14 @@
             justify-content: space-between;
         }
         .panel h2 .count {
-            background: #1f2638;
+            background: #0b0e14;
             padding: 0 12px;
             border-radius: 40px;
             font-size: 12px;
             color: #a0aec0;
         }
-
         .order-card {
-            background: #1f2638;
+            background: #0b0e14;
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 8px;
@@ -439,7 +464,7 @@
             transition: 0.2s;
             cursor: pointer;
         }
-        .order-card:hover { background: #242d42; }
+        .order-card:hover { background: #141a26; }
         .order-card .row {
             display: flex;
             justify-content: space-between;
@@ -462,8 +487,7 @@
         .status-pending { background: #92400e30; color: #fbbf24; border: 1px solid #fbbf2440; }
         .status-picking { background: #1e40af30; color: #60a5fa; border: 1px solid #60a5fa40; }
         .status-ready { background: #065f4630; color: #34d399; border: 1px solid #34d39940; }
-        .status-done { background: #1f2638; color: #6b7280; border: 1px solid #374151; }
-
+        .status-done { background: #0b0e14; color: #6b7280; border: 1px solid #374151; }
         .order-card .items {
             font-size: 13px;
             color: #a0aec0;
@@ -473,7 +497,7 @@
             flex-wrap: wrap;
         }
         .order-card .items .item {
-            background: #141a26;
+            background: #1f2638;
             padding: 2px 10px;
             border-radius: 6px;
             font-size: 12px;
@@ -497,14 +521,17 @@
             transition: width 0.3s;
         }
 
-        /* --- ТЕЛЕФОН РЕЖИМ (ТСД) --- */
+        /* ТЕЛЕФОН РЕЖИМ */
+        .phone-mode .app { max-width: 600px; }
+        .phone-mode #menuScreen { display: none !important; }
+        .phone-mode #gameScreen.active { display: block; }
         .phone-mode .grid { display: none; }
-        .phone-mode .controls { display: none; }
-        .phone-mode .qr-connect-section { display: none !important; }
-        .phone-mode .qr-client-section { display: none !important; }
+        .phone-mode .header .stats { display: none; }
+        .phone-mode #qrConnectScreen { display: none !important; }
+        .phone-mode #qrClientScreen { display: none !important; }
         .phone-mode .scanner-panel {
             border-color: #a855f7;
-            background: #1a1f30;
+            background: #1f2638;
         }
         .phone-mode .scanner-panel input {
             font-size: 28px;
@@ -514,11 +541,9 @@
             padding: 20px 40px;
             font-size: 18px;
         }
-        .phone-mode .header .stats { display: none; }
-        .phone-mode .header .room-info .code { color: #34d399; }
-        .phone-mode .header h1 { font-size: 18px; }
+        .phone-mode .header .title { font-size: 18px; }
 
-        /* --- ТОАСТ --- */
+        /* ТОАСТ */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -543,103 +568,105 @@
         .toast.error { border-color: #f87171; }
         .toast.info { border-color: #60a5fa; }
 
-        /* --- ОБЩИЕ --- */
+        /* Скрытие */
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="app" id="app">
-    <!-- ХЕДЕР -->
-    <div class="header">
-        <h1 id="mainTitle">📦 ПВЗ · Выдача заказов</h1>
-        <span class="phase phase-prep" id="phaseBadge">📋 Подготовка</span>
-        <div class="room-info">
-            <span>🏠 Комната:</span>
-            <span class="code" id="roomCode">—</span>
+    <!-- ====== СТАРТОВОЕ МЕНЮ ====== -->
+    <div id="menuScreen">
+        <div class="logo">📦</div>
+        <h1>ПВЗ · Выдача заказов</h1>
+        <div class="sub">Симулятор работы пункта выдачи с подключением ТСД</div>
+        <button class="btn-start" id="startGameBtn" onclick="startGame()">🚀 Начать игру</button>
+        <div class="steps">
+            <div class="step"><span class="num">1</span> Сгенерируются заказы</div>
+            <div class="step"><span class="num">2</span> Подключи телефон по QR</div>
+            <div class="step"><span class="num">3</span> Выдавай заказы сканированием</div>
         </div>
-        <div class="tsd-status" id="tsdStatus">
-            <span class="dot dot-off" id="tsdDot"></span>
-            <span id="tsdLabel">ТСД не подключён</span>
-        </div>
-        <div class="stats">
-            <span>📋 <strong id="totalOrders">0</strong></span>
-            <span>✅ <strong id="readyOrders">0</strong> готовы</span>
-            <span>📱 <strong id="devicesConnected">0</strong> ТСД</span>
+        <div style="margin-top: 20px; font-size: 13px; color: #4a5568;">
+            На телефоне открой этот же сайт и отсканируй QR-код
         </div>
     </div>
 
-    <!-- КНОПКИ УПРАВЛЕНИЯ -->
-    <div class="controls">
-        <button class="btn-generate" onclick="generateOrders()" id="generateBtn">➕ Сгенерировать заказы</button>
-        <button class="btn-start" onclick="startGame()" id="startBtn" disabled>🚀 Начать выдачу</button>
-        <button class="btn-reset" onclick="resetAll()">🔄 Сброс</button>
-    </div>
+    <!-- ====== ИГРОВОЙ ЭКРАН ====== -->
+    <div id="gameScreen">
+        <!-- ХЕДЕР -->
+        <div class="header">
+            <span class="title">📦 ПВЗ</span>
+            <span class="phase phase-waiting" id="phaseBadge">⏳ Ожидание ТСД</span>
+            <div class="tsd-status">
+                <span class="dot dot-off" id="tsdDot"></span>
+                <span id="tsdLabel">ТСД не подключён</span>
+            </div>
+            <div class="stats">
+                <span>📋 <strong id="totalOrders">0</strong></span>
+                <span>✅ <strong id="readyOrders">0</strong> готовы</span>
+            </div>
+        </div>
 
-    <!-- QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА -->
-    <div class="qr-connect-section" id="qrConnectSection">
-        <h2>📱 ПОДКЛЮЧИ ТЕЛЕФОН КАК ТСД</h2>
-        <div class="sub">Отсканируй QR-код телефоном, чтобы использовать его как сканер</div>
-        <div class="connect-container">
+        <!-- QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА -->
+        <div id="qrConnectScreen">
+            <h2>📱 ПОДКЛЮЧИ ТЕЛЕФОН</h2>
+            <div class="sub">Отсканируй QR-код телефоном, чтобы использовать его как ТСД</div>
             <div class="qr-box">
                 <div id="connect-qrcode"></div>
             </div>
-            <div class="connect-info">
-                <div class="label">Код комнаты</div>
-                <div class="value" id="connectRoomCode">—</div>
-                <div class="label" style="margin-top: 10px;">Статус</div>
-                <div class="status-text" id="connectStatus">⏳ Ожидание подключения...</div>
-                <div style="margin-top: 15px; font-size: 13px; color: #4a5568;">
-                    Или введи код вручную
+            <div class="room-code">
+                Код комнаты: <strong id="connectRoomCode">—</strong>
+            </div>
+            <div class="status-text" id="connectStatus">⏳ Ожидание подключения...</div>
+            <div style="margin-top: 15px; font-size: 13px; color: #4a5568;">
+                Или открой на телефоне ссылку с <code>?phone=true&room=XXXX</code>
+            </div>
+        </div>
+
+        <!-- QR ДЛЯ КЛИЕНТА -->
+        <div id="qrClientScreen">
+            <h2>📱 КЛИЕНТ ПРИШЁЛ ЗА ЗАКАЗОМ</h2>
+            <div class="sub">Покажи QR-код клиенту или отсканируй его своим ТСД</div>
+            <div class="qr-container">
+                <div class="qr-box active" id="clientQrBox">
+                    <div id="client-qrcode"></div>
+                </div>
+                <div class="order-info" id="clientOrderInfo">
+                    <div class="label">Заказ</div>
+                    <div class="value" id="clientOrderId">—</div>
+                    <div class="items" id="clientOrderItems">Нет активных заказов</div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- QR-КОД ДЛЯ КЛИЕНТА -->
-    <div class="qr-client-section" id="qrClientSection">
-        <h2>📱 КЛИЕНТ ПРИШЁЛ ЗА ЗАКАЗОМ</h2>
-        <div class="sub">Покажи QR-код клиенту или отсканируй его своим ТСД</div>
-        
-        <div class="qr-container">
-            <div class="qr-box" id="clientQrBox">
-                <div id="client-qrcode"></div>
-            </div>
-            <div class="order-info" id="clientOrderInfo">
-                <div class="label">Заказ</div>
-                <div class="value" id="clientOrderId">—</div>
-                <div class="items" id="clientOrderItems">Нет активных заказов</div>
+            <div class="controls-qr">
+                <button class="btn-next-client" onclick="nextClient()" id="nextClientBtn" disabled>➡️ Следующий клиент</button>
+                <button class="btn-reset-game" onclick="resetGame()">🔄 Сбросить игру</button>
             </div>
         </div>
-        
-        <div class="controls-qr">
-            <button class="btn-next-client" onclick="nextClient()" id="nextClientBtn" disabled>➡️ Следующий клиент</button>
-        </div>
-    </div>
 
-    <!-- СКАНЕР (ТСД) -->
-    <div class="scanner-panel" id="scannerPanel">
-        <div class="top">
-            <span class="icon">📷</span>
-            <span class="label">ТСД СКАНЕР (выдача):</span>
-            <input type="text" id="scanInput" placeholder="Отсканируй QR-код клиента" autofocus>
-            <button class="btn-scan" onclick="handleScan()" id="scanBtn">🔍 Сканировать</button>
+        <!-- СКАНЕР (ТСД) -->
+        <div class="scanner-panel" id="scannerPanel">
+            <div class="top">
+                <span class="icon">📷</span>
+                <span class="label">ТСД СКАНЕР:</span>
+                <input type="text" id="scanInput" placeholder="Отсканируй QR-код клиента" autofocus>
+                <button class="btn-scan" onclick="handleScan()" id="scanBtn">🔍 Сканировать</button>
+            </div>
+            <div class="status-msg" id="scanStatus">⏳ Ожидание сканирования...</div>
         </div>
-        <div class="status-msg" id="scanStatus">⏳ Ожидание сканирования...</div>
-    </div>
 
-    <!-- СПИСОК ЗАКАЗОВ -->
-    <div class="grid" id="mainGrid">
-        <div class="panel">
-            <h2>📋 Заказы <span class="count" id="orderCount">0</span></h2>
-            <div id="orderList"></div>
-        </div>
-        <div class="panel" id="detailPanel">
-            <h2>📦 Детали <span class="count" id="detailOrderId">—</span></h2>
-            <div id="detailContent">
-                <div style="color: #4a5568; text-align: center; padding: 40px 0;">
-                    <div style="font-size: 40px; margin-bottom: 10px;">👆</div>
-                    Выберите заказ для деталей
+        <!-- СПИСОК ЗАКАЗОВ -->
+        <div class="grid" id="mainGrid">
+            <div class="panel">
+                <h2>📋 Заказы <span class="count" id="orderCount">0</span></h2>
+                <div id="orderList"></div>
+            </div>
+            <div class="panel" id="detailPanel">
+                <h2>📦 Детали <span class="count" id="detailOrderId">—</span></h2>
+                <div id="detailContent">
+                    <div style="color: #4a5568; text-align: center; padding: 30px 0;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">👆</div>
+                        Выберите заказ для деталей
+                    </div>
                 </div>
             </div>
         </div>
@@ -651,7 +678,7 @@
 
 <script>
 // ============================================================
-//  🔥 FIREBASE НАСТРОЙКИ
+//  FIREBASE
 // ============================================================
 const firebaseConfig = {
     apiKey: "AIzaSyCksMAKAI1U2gXRHefO0vAZYbY4Y6ES1Sg",
@@ -690,67 +717,26 @@ let qrConnectInstance = null;
 let qrClientInstance = null;
 let isPhoneMode = false;
 let currentReadyOrder = null;
-
-// ============================================================
-//  ГЕНЕРАЦИЯ ЗАКАЗОВ
-// ============================================================
-function generateOrders() {
-    if (gameActive) {
-        showToast('❌ Нельзя генерировать во время выдачи!', 'error');
-        return;
-    }
-    
-    const count = 4 + Math.floor(Math.random() * 5);
-    const newOrders = [];
-    
-    for (let i = 0; i < count; i++) {
-        const itemsCount = 2 + Math.floor(Math.random() * 3);
-        const shuffled = [...PRODUCTS].sort(() => Math.random() - 0.5);
-        const items = shuffled.slice(0, itemsCount).map(p => ({
-            ...p,
-            picked: false
-        }));
-        
-        newOrders.push({
-            id: `WB-${1000 + Math.floor(Math.random() * 9000)}`,
-            items: items,
-            status: 'pending',
-            pickedCount: 0
-        });
-    }
-    
-    orders = newOrders;
-    currentReadyOrder = null;
-    renderAll();
-    document.getElementById('startBtn').disabled = false;
-    showToast(`✅ Сгенерировано ${count} заказов`, 'success');
-}
+let gameStarted = false;
 
 // ============================================================
 //  СТАРТ ИГРЫ
 // ============================================================
 function startGame() {
-    if (orders.length === 0) {
-        showToast('❌ Сначала сгенерируй заказы!', 'error');
-        return;
-    }
+    if (gameStarted) return;
+    gameStarted = true;
     
-    // Проверяем, все ли заказы собраны
-    const notReady = orders.filter(o => o.status !== 'ready' && o.status !== 'done');
-    if (notReady.length > 0) {
-        showToast(`⚠️ ${notReady.length} заказов ещё не собраны. Собери их сначала!`, 'error');
-        return;
-    }
+    // Генерируем заказы
+    generateOrdersInternal();
     
-    // Проверяем, есть ли хоть один готовый заказ
-    const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
-    if (readyOrders.length === 0) {
-        showToast('❌ Нет заказов готовых к выдаче!', 'error');
-        return;
-    }
+    // Показываем игровой экран
+    document.getElementById('menuScreen').style.display = 'none';
+    document.getElementById('gameScreen').classList.add('active');
     
-    gameActive = true;
+    // Создаём комнату
     roomId = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('connectRoomCode').textContent = roomId;
+    document.getElementById('roomCode').textContent = roomId;
     
     // Сохраняем в Firebase
     const gameData = {
@@ -759,92 +745,78 @@ function startGame() {
         orders: orders,
         tsdConnected: false
     };
-    
     database.ref('game').set(gameData);
     
-    // Обновляем интерфейс
-    document.getElementById('roomCode').textContent = roomId;
+    // Показываем QR для подключения телефона
+    document.getElementById('qrConnectScreen').classList.add('show');
     document.getElementById('phaseBadge').textContent = '⏳ Ожидание ТСД';
     document.getElementById('phaseBadge').className = 'phase phase-waiting';
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('generateBtn').disabled = true;
-    
-    // Показываем QR для подключения телефона
-    showConnectQR();
-    
-    // Слушаем изменения из Firebase
-    database.ref('game').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (data.orders) {
-                orders = data.orders;
-                renderAll();
-                checkGameComplete();
-            }
-            if (data.tsdConnected !== undefined) {
-                tsdConnected = data.tsdConnected;
-                updateTSDStatus();
-                if (tsdConnected) {
-                    // ТСД подключился! Скрываем QR и показываем выдачу
-                    hideConnectQR();
-                    showClientQR();
-                    document.getElementById('phaseBadge').textContent = '🎯 Выдача';
-                    document.getElementById('phaseBadge').className = 'phase phase-game';
-                    showToast('📱 ТСД подключён! Можно выдавать заказы', 'success');
-                }
-            }
-        }
-    });
-    
-    showToast(`🚀 Игра началась! Комната: ${roomId}`, 'success');
-}
-
-// ============================================================
-//  QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА
-// ============================================================
-function showConnectQR() {
-    const section = document.getElementById('qrConnectSection');
-    section.classList.remove('hidden');
-    section.classList.add('show');
-    
-    document.getElementById('connectRoomCode').textContent = roomId;
-    document.getElementById('connectStatus').textContent = '⏳ Ожидание подключения...';
-    document.getElementById('connectStatus').className = 'status-text';
+    document.getElementById('startGameBtn').disabled = true;
     
     // Генерируем QR-код для подключения
     const qrContainer = document.getElementById('connect-qrcode');
     qrContainer.innerHTML = '';
-    
     const connectUrl = window.location.href.split('?')[0] + '?phone=true&room=' + roomId;
-    
     if (typeof QRCode !== 'undefined') {
         qrConnectInstance = new QRCode(qrContainer, {
             text: connectUrl,
-            width: 200,
-            height: 200,
+            width: 220,
+            height: 220,
             colorDark: '#000000',
             colorLight: '#ffffff',
             correctLevel: QRCode.CorrectLevel.H
         });
     } else {
-        qrContainer.innerHTML = `
-            <div style="width:200px;height:200px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:8px;">
-                <div style="font-size:48px;">📱</div>
-                <div style="font-size:14px;font-weight:700;font-family:monospace;">${connectUrl}</div>
-            </div>
-        `;
+        qrContainer.innerHTML = `<div style="width:220px;height:220px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;border-radius:8px;">📱</div>`;
     }
+    
+    // Слушаем изменения из Firebase
+    database.ref('game').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        if (data.orders) {
+            orders = data.orders;
+            renderAll();
+            checkGameComplete();
+        }
+        
+        if (data.tsdConnected !== undefined && data.tsdConnected !== tsdConnected) {
+            tsdConnected = data.tsdConnected;
+            updateTSDStatus();
+            if (tsdConnected) {
+                // ТСД подключился!
+                document.getElementById('qrConnectScreen').classList.remove('show');
+                document.getElementById('phaseBadge').textContent = '🎯 Выдача';
+                document.getElementById('phaseBadge').className = 'phase phase-game';
+                showToast('📱 ТСД подключён! Можно выдавать заказы', 'success');
+                showClientQR();
+            }
+        }
+    });
+    
+    showToast('🚀 Игра началась! Подключи телефон по QR', 'info');
 }
 
-function hideConnectQR() {
-    const section = document.getElementById('qrConnectSection');
-    section.classList.remove('show');
-    section.classList.add('hidden');
-    // Очищаем QR код
-    if (qrConnectInstance) {
-        qrConnectInstance.clear();
-        qrConnectInstance = null;
+// ============================================================
+//  ГЕНЕРАЦИЯ ЗАКАЗОВ (внутренняя)
+// ============================================================
+function generateOrdersInternal() {
+    const count = 4 + Math.floor(Math.random() * 5);
+    const newOrders = [];
+    for (let i = 0; i < count; i++) {
+        const itemsCount = 2 + Math.floor(Math.random() * 3);
+        const shuffled = [...PRODUCTS].sort(() => Math.random() - 0.5);
+        const items = shuffled.slice(0, itemsCount).map(p => ({ ...p, picked: false }));
+        newOrders.push({
+            id: `WB-${1000 + Math.floor(Math.random() * 9000)}`,
+            items: items,
+            status: 'pending',
+            pickedCount: 0
+        });
     }
+    orders = newOrders;
+    renderAll();
 }
 
 // ============================================================
@@ -853,16 +825,12 @@ function hideConnectQR() {
 function updateTSDStatus() {
     const dot = document.getElementById('tsdDot');
     const label = document.getElementById('tsdLabel');
-    const count = document.getElementById('devicesConnected');
-    
     if (tsdConnected) {
         dot.className = 'dot dot-on';
         label.textContent = '✅ ТСД подключён';
-        count.textContent = '1';
     } else {
         dot.className = 'dot dot-off';
         label.textContent = '⏳ ТСД не подключён';
-        count.textContent = '0';
     }
 }
 
@@ -871,28 +839,24 @@ function updateTSDStatus() {
 // ============================================================
 function showClientQR() {
     const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
-    
     if (readyOrders.length === 0 || !tsdConnected) {
-        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('qrClientScreen').classList.remove('show');
         document.getElementById('nextClientBtn').disabled = true;
         return;
     }
     
-    // Берём первый готовый заказ    currentReadyOrder = readyOrders[0];
+    currentReadyOrder = readyOrders[0];
     const order = currentReadyOrder;
     
-    document.getElementById('qrClientSection').classList.add('show');
+    document.getElementById('qrClientScreen').classList.add('show');
     document.getElementById('clientOrderId').textContent = order.id;
-    document.getElementById('clientOrderItems').innerHTML = order.items.map(i => 
-        `<span>${i.name}</span>`
-    ).join('');
-    document.getElementById('clientQrBox').classList.add('active');
+    document.getElementById('clientOrderItems').innerHTML = order.items.map(i => `<span>${i.name}</span>`).join('');
     document.getElementById('nextClientBtn').disabled = false;
+    document.getElementById('clientQrBox').classList.add('active');
     
     // Генерируем QR-код для клиента
     const qrContainer = document.getElementById('client-qrcode');
     qrContainer.innerHTML = '';
-    
     if (typeof QRCode !== 'undefined') {
         qrClientInstance = new QRCode(qrContainer, {
             text: order.id,
@@ -903,12 +867,7 @@ function showClientQR() {
             correctLevel: QRCode.CorrectLevel.H
         });
     } else {
-        qrContainer.innerHTML = `
-            <div style="width:200px;height:200px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:8px;">
-                <div style="font-size:48px;">📱</div>
-                <div style="font-size:20px;font-weight:700;font-family:monospace;">${order.id}</div>
-            </div>
-        `;
+        qrContainer.innerHTML = `<div style="width:200px;height:200px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:24px;font-weight:700;">${order.id}</div>`;
     }
     
     document.getElementById('scanStatus').textContent = `📱 Ожидает сканирования: ${order.id}`;
@@ -923,22 +882,18 @@ function nextClient() {
         showToast('❌ ТСД не подключён!', 'error');
         return;
     }
-    
     const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
     if (readyOrders.length === 0) {
         showToast('❌ Нет заказов для выдачи', 'error');
-        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('qrClientScreen').classList.remove('show');
         document.getElementById('nextClientBtn').disabled = true;
         return;
     }
-    
-    // Очищаем старый QR
     if (qrClientInstance) {
         qrClientInstance.clear();
         qrClientInstance = null;
     }
     document.getElementById('client-qrcode').innerHTML = '';
-    
     showClientQR();
 }
 
@@ -948,27 +903,22 @@ function nextClient() {
 function handleScan() {
     const input = document.getElementById('scanInput');
     const code = input.value.trim().toUpperCase();
-    
     if (!code) {
         showToast('❌ Отсканируй QR-код клиента', 'error');
         return;
     }
-    
     if (!gameActive) {
-        showToast('❌ Выдача не активна! Нажми "Начать выдачу"', 'error');
+        showToast('❌ Игра не активна', 'error');
         input.value = '';
         return;
     }
-    
     if (!tsdConnected) {
         showToast('❌ ТСД не подключён!', 'error');
         input.value = '';
         return;
     }
     
-    // Ищем заказ по коду
     const order = orders.find(o => o.id === code);
-    
     if (!order) {
         showToast(`❌ Заказ ${code} не найден`, 'error');
         document.getElementById('scanStatus').textContent = `❌ ${code} - не найден`;
@@ -976,7 +926,6 @@ function handleScan() {
         input.value = '';
         return;
     }
-    
     if (order.status === 'done') {
         showToast(`❌ Заказ ${code} уже выдан`, 'error');
         document.getElementById('scanStatus').textContent = `❌ ${code} - уже выдан`;
@@ -984,34 +933,24 @@ function handleScan() {
         input.value = '';
         return;
     }
-    
     if (order.status !== 'ready') {
-        showToast(`❌ Заказ ${code} ещё не готов к выдаче`, 'error');
+        showToast(`❌ Заказ ${code} ещё не готов`, 'error');
         document.getElementById('scanStatus').textContent = `❌ ${code} - ещё не готов`;
         document.getElementById('scanStatus').className = 'status-msg error';
         input.value = '';
         return;
     }
     
-    // ВЫДАЁМ ЗАКАЗ!
+    // ВЫДАЁМ
     order.status = 'done';
     database.ref('game/orders').set(orders);
-    
-    document.getElementById('scanStatus').textContent = `✅ Заказ ${code} ВЫДАН клиенту!`;
+    document.getElementById('scanStatus').textContent = `✅ Заказ ${code} ВЫДАН!`;
     document.getElementById('scanStatus').className = 'status-msg success';
-    
     showToast(`✅ Заказ ${code} выдан!`, 'success');
-    
     input.value = '';
     renderAll();
     checkGameComplete();
-    
-    // Показываем следующего клиента
-    setTimeout(() => {
-        if (gameActive) {
-            showClientQR();
-        }
-    }, 500);
+    setTimeout(() => { if (gameActive) showClientQR(); }, 500);
 }
 
 // ============================================================
@@ -1020,21 +959,60 @@ function handleScan() {
 function checkGameComplete() {
     const allDone = orders.every(o => o.status === 'done');
     if (allDone && orders.length > 0 && gameActive) {
-        document.getElementById('phaseBadge').textContent = '🏆 ВСЕ ЗАКАЗЫ ВЫДАНЫ!';
+        document.getElementById('phaseBadge').textContent = '🏆 ВСЕ ВЫДАНЫ!';
         document.getElementById('phaseBadge').className = 'phase phase-done';
-        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('qrClientScreen').classList.remove('show');
         document.getElementById('nextClientBtn').disabled = true;
         document.getElementById('scanStatus').textContent = '🏆 Все заказы выданы!';
         document.getElementById('scanStatus').className = 'status-msg success';
         document.getElementById('scanBtn').disabled = true;
         document.getElementById('scanInput').disabled = true;
-        showToast('🏆 ПОЗДРАВЛЯЮ! Все заказы выданы клиентам!', 'success');
+        showToast('🏆 ПОЗДРАВЛЯЮ! Все заказы выданы!', 'success');
         gameActive = false;
         database.ref('game/active').set(false);
         database.ref('game/tsdConnected').set(false);
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('startGameBtn').disabled = false;
+        gameStarted = false;
     }
+}
+
+// ============================================================
+//  СБРОС ИГРЫ
+// ============================================================
+function resetGame() {
+    if (gameActive || gameStarted) {
+        if (!confirm('Сбросить игру?')) return;
+    }
+    // Очищаем всё
+    if (qrConnectInstance) { qrConnectInstance.clear(); qrConnectInstance = null; }
+    if (qrClientInstance) { qrClientInstance.clear(); qrClientInstance = null; }
+    document.getElementById('connect-qrcode').innerHTML = '';
+    document.getElementById('client-qrcode').innerHTML = '';
+    
+    orders = [];
+    gameActive = false;
+    gameStarted = false;
+    roomId = null;
+    tsdConnected = false;
+    currentReadyOrder = null;
+    
+    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('menuScreen').style.display = 'flex';
+    document.getElementById('qrConnectScreen').classList.remove('show');
+    document.getElementById('qrClientScreen').classList.remove('show');
+    document.getElementById('phaseBadge').textContent = '⏳ Ожидание';
+    document.getElementById('phaseBadge').className = 'phase phase-waiting';
+    document.getElementById('startGameBtn').disabled = false;
+    document.getElementById('scanBtn').disabled = false;
+    document.getElementById('scanInput').disabled = false;
+    document.getElementById('scanInput').value = '';
+    document.getElementById('scanStatus').textContent = '⏳ Ожидание сканирования...';
+    document.getElementById('scanStatus').className = 'status-msg';
+    document.getElementById('nextClientBtn').disabled = true;
+    updateTSDStatus();
+    database.ref('game').remove();
+    renderAll();
+    showToast('🔄 Игра сброшена', 'info');
 }
 
 // ============================================================
@@ -1054,50 +1032,24 @@ function renderStats() {
 
 function renderOrders() {
     const container = document.getElementById('orderList');
-    
     if (orders.length === 0) {
-        container.innerHTML = `
-            <div style="color: #4a5568; text-align: center; padding: 30px 0;">
-                <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
-                Нет заказов.<br>Нажми "Сгенерировать заказы"
-            </div>
-        `;
+        container.innerHTML = `<div style="color:#4a5568;text-align:center;padding:30px 0;">Нет заказов</div>`;
         return;
     }
-    
     container.innerHTML = orders.map(order => {
         const total = order.items.length;
         const picked = order.items.filter(i => i.picked).length;
         const progress = total > 0 ? (picked / total * 100) : 0;
-        
-        const statusMap = {
-            'pending': '⏳ Ожидает сборки',
-            'picking': '🔄 Собирается',
-            'ready': '✅ Готов к выдаче',
-            'done': '✅ Выдан'
-        };
-        
-        const statusClass = {
-            'pending': 'status-pending',
-            'picking': 'status-picking',
-            'ready': 'status-ready',
-            'done': 'status-done'
-        };
-        
+        const statusMap = { 'pending': '⏳ Ожидает', 'picking': '🔄 Собирается', 'ready': '✅ Готов', 'done': '✅ Выдан' };
+        const statusClass = { 'pending': 'status-pending', 'picking': 'status-picking', 'ready': 'status-ready', 'done': 'status-done' };
         return `
             <div class="order-card" onclick="showDetail('${order.id}')">
                 <div class="row">
                     <span class="id">${order.id}</span>
                     <span class="status ${statusClass[order.status]}">${statusMap[order.status] || order.status}</span>
                 </div>
-                <div class="items">
-                    ${order.items.map(item => `
-                        <span class="item ${item.picked ? 'picked' : ''}">${item.name}</span>
-                    `).join('')}
-                </div>
-                <div class="progress">
-                    <div class="fill" style="width: ${progress}%"></div>
-                </div>
+                <div class="items">${order.items.map(item => `<span class="item ${item.picked ? 'picked' : ''}">${item.name}</span>`).join('')}</div>
+                <div class="progress"><div class="fill" style="width:${progress}%"></div></div>
             </div>
         `;
     }).join('');
@@ -1106,78 +1058,19 @@ function renderOrders() {
 function showDetail(orderId) {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
-    
     document.getElementById('detailOrderId').textContent = order.id;
     const container = document.getElementById('detailContent');
-    
     container.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <div style="font-size: 14px; color: #a0aec0;">Статус: 
-                <span style="font-weight: 600; color: #fff;">${order.status === 'done' ? '✅ Выдан' : order.status === 'ready' ? '🟢 Готов к выдаче' : order.status === 'picking' ? '🔄 Собирается' : '⏳ Ожидает'}</span>
-            </div>
+        <div style="margin-bottom:10px;font-size:14px;color:#a0aec0;">Статус: <span style="font-weight:600;color:#fff;">${order.status === 'done' ? '✅ Выдан' : order.status === 'ready' ? '🟢 Готов' : order.status === 'picking' ? '🔄 Собирается' : '⏳ Ожидает'}</span></div>
+        <div style="margin-bottom:15px;">
+            <div style="font-size:14px;color:#a0aec0;margin-bottom:8px;">Товары:</div>
+            ${order.items.map(item => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1f2638;"><span>${item.name}</span><span style="${item.picked ? 'color:#34d399;' : 'color:#f87171;'}">${item.picked ? '✅ Собран' : '⏳ Ожидает'}</span></div>`).join('')}
         </div>
-        <div style="margin-bottom: 15px;">
-            <div style="font-size: 14px; color: #a0aec0; margin-bottom: 8px;">Товары в заказе:</div>
-            ${order.items.map(item => `
-                <div style="display:flex; justify-content:space-between; padding: 6px 0; border-bottom: 1px solid #1f2638;">
-                    <span>${item.name}</span>
-                    <span style="${item.picked ? 'color: #34d399;' : 'color: #f87171;'}">${item.picked ? '✅ Собран' : '⏳ Ожидает'}</span>
-                </div>
-            `).join('')}
-        </div>
-        <div style="padding: 10px; background: #1f2638; border-radius: 8px; font-size: 13px; color: #a0aec0;">
-            <div>Код заказа: <span style="font-family: monospace; color: #a855f7; font-weight: 700;">${order.id}</span></div>
-            <div style="margin-top: 4px;">Товаров: ${order.items.length} | Собрано: ${order.items.filter(i => i.picked).length}</div>
+        <div style="padding:10px;background:#0b0e14;border-radius:8px;font-size:13px;color:#a0aec0;">
+            <div>Код: <span style="font-family:monospace;color:#a855f7;font-weight:700;">${order.id}</span></div>
+            <div style="margin-top:4px;">Товаров: ${order.items.length} | Собрано: ${order.items.filter(i => i.picked).length}</div>
         </div>
     `;
-}
-
-// ============================================================
-//  СБРОС
-// ============================================================
-function resetAll() {
-    if (gameActive) {
-        if (!confirm('Остановить выдачу и сбросить всё?')) return;
-    }
-    
-    orders = [];
-    gameActive = false;
-    roomId = null;
-    tsdConnected = false;
-    currentReadyOrder = null;
-    
-    // Очищаем QR
-    if (qrConnectInstance) {
-        qrConnectInstance.clear();
-        qrConnectInstance = null;
-    }
-    if (qrClientInstance) {
-        qrClientInstance.clear();
-        qrClientInstance = null;
-    }
-    
-    document.getElementById('roomCode').textContent = '—';
-    document.getElementById('phaseBadge').textContent = '📋 Подготовка';
-    document.getElementById('phaseBadge').className = 'phase phase-prep';
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('generateBtn').disabled = false;
-    document.getElementById('scanBtn').disabled = false;
-    document.getElementById('scanInput').disabled = false;
-    document.getElementById('qrConnectSection').classList.remove('show');
-    document.getElementById('qrConnectSection').classList.add('hidden');
-    document.getElementById('qrClientSection').classList.remove('show');
-    document.getElementById('nextClientBtn').disabled = true;
-    document.getElementById('client-qrcode').innerHTML = '';
-    document.getElementById('connect-qrcode').innerHTML = '';
-    document.getElementById('scanStatus').textContent = '⏳ Ожидание сканирования...';
-    document.getElementById('scanStatus').className = 'status-msg';
-    document.getElementById('scanInput').value = '';
-    
-    updateTSDStatus();
-    
-    database.ref('game').remove();
-    renderAll();
-    showToast('🔄 Всё сброшено', 'info');
 }
 
 // ============================================================
@@ -1189,50 +1082,42 @@ function showToast(message, type = 'info') {
     toast.className = 'toast ' + type;
     toast.classList.add('show');
     clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3500);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 // ============================================================
-//  РЕЖИМ ТЕЛЕФОНА (ТСД)
+//  РЕЖИМ ТЕЛЕФОНА
 // ============================================================
 function checkPhoneMode() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('phone') === 'true') {
         isPhoneMode = true;
         document.body.classList.add('phone-mode');
-        document.getElementById('mainTitle').textContent = '📱 ТСД · Выдача';
+        document.getElementById('menuScreen').style.display = 'none';
+        document.getElementById('gameScreen').classList.add('active');
         document.getElementById('phaseBadge').textContent = '📱 ТСД режим';
+        document.getElementById('phaseBadge').className = 'phase phase-game';
         document.getElementById('scanInput').placeholder = 'Сканируй QR-код клиента';
         
-        // Подключаемся к комнате
         const room = params.get('room');
         if (room) {
+            document.getElementById('connectRoomCode').textContent = room;
             document.getElementById('roomCode').textContent = room;
-            // Подключаем ТСД к Firebase
-            database.ref('game').update({
-                tsdConnected: true
-            });
-            
+            // Подключаем ТСД
+            database.ref('game').update({ tsdConnected: true });
             // Слушаем заказы
             database.ref('game/orders').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     orders = data;
-                    renderStats();
-                    renderOrders();
+                    renderAll();
                 }
             });
-            
-            // Слушаем статус игры
             database.ref('game/active').on('value', (snapshot) => {
-                const active = snapshot.val();
-                if (active === false) {
+                if (snapshot.val() === false) {
                     showToast('🏆 Игра завершена!', 'success');
                 }
             });
-            
             showToast('📱 ТСД подключён к комнате ' + room, 'success');
         }
     }
@@ -1244,9 +1129,7 @@ function checkPhoneMode() {
 checkPhoneMode();
 renderAll();
 updateTSDStatus();
-
-console.log('✅ ПВЗ Симулятор загружен!');
-console.log('📱 Для подключения телефона добавь ?phone=true&room=XXXX');
+console.log('✅ ПВЗ симулятор загружен');
 </script>
 </body>
 </html>
