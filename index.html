@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ПВЗ - Выдача заказов по QR</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .app {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- ХЕДЕР --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #141a26;
+            border-radius: 20px;
+            border: 1px solid #2a3042;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .phase {
+            font-size: 13px;
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .phase-prep { background: #92400e30; color: #fbbf24; border: 1px solid #fbbf2440; }
+        .phase-game { background: #1e40af30; color: #60a5fa; border: 1px solid #60a5fa40; }
+        .phase-done { background: #065f4630; color: #34d399; border: 1px solid #34d39940; }
+        .phase-waiting { background: #7c3aed30; color: #a855f7; border: 1px solid #a855f740; animation: pulse-border 1.5s ease-in-out infinite; }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: #a855f740; }
+            50% { border-color: #a855f7; }
+        }
+        
+        .header .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #a0aec0;
+            flex-wrap: wrap;
+        }
+        .header .stats strong {
+            color: #fff;
+            font-size: 16px;
+        }
+        .header .room-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1f2638;
+            padding: 4px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+            font-size: 13px;
+        }
+        .header .room-info .code {
+            font-size: 22px;
+            font-weight: 800;
+            color: #a855f7;
+            font-family: monospace;
+            letter-spacing: 3px;
+        }
+        .header .tsd-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1f2638;
+            padding: 4px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+            font-size: 13px;
+        }
+        .header .tsd-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-off { background: #4a5568; }
+        .dot-on { background: #34d399; animation: pulse-dot 1s ease-in-out infinite; }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* --- КНОПКИ --- */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+        .btn-start {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .btn-start:hover:not(:disabled) { background: #6d28d9; transform: scale(1.02); }
+        .btn-start:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .btn-generate {
+            background: #1e40af;
+            color: #fff;
+        }
+        .btn-generate:hover:not(:disabled) { background: #1e3a8a; transform: scale(1.02); }
+        .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .btn-reset {
+            background: #2a3042;
+            color: #a0aec0;
+        }
+        .btn-reset:hover { background: #3a4158; }
+
+        /* --- QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА --- */
+        .qr-connect-section {
+            background: #141a26;
+            border: 2px solid #7c3aed;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .qr-connect-section.show { display: block; }
+        .qr-connect-section.hidden { display: none; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .qr-connect-section h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #60a5fa;
+        }
+        .qr-connect-section .sub {
+            color: #a0aec0;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .qr-connect-section .connect-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        .qr-connect-section .qr-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            display: inline-block;
+        }
+        .qr-connect-section .qr-box #connect-qrcode {
+            width: 200px;
+            height: 200px;
+        }
+        .qr-connect-section .connect-info {
+            text-align: left;
+            background: #1f2638;
+            padding: 20px 25px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+            min-width: 200px;
+        }
+        .qr-connect-section .connect-info .label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .qr-connect-section .connect-info .value {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: monospace;
+            color: #a855f7;
+            margin: 5px 0;
+        }
+        .qr-connect-section .connect-info .status-text {
+            font-size: 14px;
+            color: #fbbf24;
+            margin-top: 5px;
+        }
+        .qr-connect-section .connect-info .status-text.connected {
+            color: #34d399;
+        }
+
+        /* --- СЕКЦИЯ ВЫДАЧИ КЛИЕНТУ --- */
+        .qr-client-section {
+            background: #141a26;
+            border: 2px solid #2a3042;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        .qr-client-section.show { display: block; }
+        .qr-client-section h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #fbbf24;
+        }
+        .qr-client-section .sub {
+            color: #a0aec0;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .qr-client-section .qr-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .qr-client-section .qr-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            display: inline-block;
+        }
+        .qr-client-section .qr-box #client-qrcode {
+            width: 200px;
+            height: 200px;
+        }
+        .qr-client-section .qr-box.active {
+            animation: pulse 1.5s ease-in-out infinite;
+            border: 3px solid #34d399;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .qr-client-section .order-info {
+            text-align: left;
+            background: #1f2638;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+        }
+        .qr-client-section .order-info .label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .qr-client-section .order-info .value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: monospace;
+            color: #a855f7;
+            margin: 5px 0;
+        }
+        .qr-client-section .order-info .items {
+            font-size: 14px;
+            color: #a0aec0;
+        }
+        .qr-client-section .order-info .items span {
+            display: inline-block;
+            background: #141a26;
+            padding: 2px 10px;
+            border-radius: 6px;
+            margin: 2px;
+        }
+        .qr-client-section .controls-qr {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .qr-client-section .controls-qr button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+        .btn-next-client {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .btn-next-client:hover:not(:disabled) { background: #6d28d9; transform: scale(1.02); }
+        .btn-next-client:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* --- СКАНЕР (ТСД) --- */
+        .scanner-panel {
+            background: #141a26;
+            border: 2px solid #2a3042;
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .scanner-panel .top {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .scanner-panel .top .icon {
+            font-size: 28px;
+        }
+        .scanner-panel .top .label {
+            font-weight: 600;
+            color: #a0aec0;
+            font-size: 14px;
+        }
+        .scanner-panel input {
+            flex: 2;
+            min-width: 180px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid #2a3042;
+            background: #0b0e14;
+            color: #fff;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            transition: 0.2s;
+        }
+        .scanner-panel input:focus {
+            outline: none;
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+        .scanner-panel input::placeholder {
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: 0;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        .scanner-panel .btn-scan {
+            padding: 14px 28px;
+            background: #7c3aed;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 15px;
+        }
+        .scanner-panel .btn-scan:hover:not(:disabled) { background: #6d28d9; transform: scale(1.02); }
+        .scanner-panel .btn-scan:disabled { opacity: 0.4; cursor: not-allowed; }
+        .scanner-panel .status-msg {
+            margin-top: 10px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #1f2638;
+            color: #a0aec0;
+            min-height: 36px;
+        }
+        .scanner-panel .status-msg.success { color: #34d399; background: #065f4630; border: 1px solid #34d39940; }
+        .scanner-panel .status-msg.error { color: #f87171; background: #7f1d1d30; border: 1px solid #f8717140; }
+        .scanner-panel .status-msg.info { color: #60a5fa; background: #1e40af30; border: 1px solid #60a5fa40; }
+        .scanner-panel .status-msg.waiting { color: #fbbf24; background: #92400e30; border: 1px solid #fbbf2440; }
+
+        /* --- СПИСОК ЗАКАЗОВ --- */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: #141a26;
+            border-radius: 20px;
+            padding: 18px;
+            border: 1px solid #2a3042;
+            min-height: 250px;
+        }
+        .panel h2 {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8896ab;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .panel h2 .count {
+            background: #1f2638;
+            padding: 0 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .order-card {
+            background: #1f2638;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-left: 4px solid #4a5568;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .order-card:hover { background: #242d42; }
+        .order-card .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .order-card .id {
+            font-weight: 700;
+            font-family: monospace;
+            color: #a855f7;
+            font-size: 15px;
+        }
+        .order-card .status {
+            font-size: 11px;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .status-pending { background: #92400e30; color: #fbbf24; border: 1px solid #fbbf2440; }
+        .status-picking { background: #1e40af30; color: #60a5fa; border: 1px solid #60a5fa40; }
+        .status-ready { background: #065f4630; color: #34d399; border: 1px solid #34d39940; }
+        .status-done { background: #1f2638; color: #6b7280; border: 1px solid #374151; }
+
+        .order-card .items {
+            font-size: 13px;
+            color: #a0aec0;
+            margin-top: 6px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .order-card .items .item {
+            background: #141a26;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .order-card .items .item.picked {
+            color: #34d399;
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+        .order-card .progress {
+            height: 3px;
+            background: #2a3042;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .order-card .progress .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed, #a855f7);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* --- ТЕЛЕФОН РЕЖИМ (ТСД) --- */
+        .phone-mode .grid { display: none; }
+        .phone-mode .controls { display: none; }
+        .phone-mode .qr-connect-section { display: none !important; }
+        .phone-mode .qr-client-section { display: none !important; }
+        .phone-mode .scanner-panel {
+            border-color: #a855f7;
+            background: #1a1f30;
+        }
+        .phone-mode .scanner-panel input {
+            font-size: 28px;
+            padding: 20px;
+        }
+        .phone-mode .scanner-panel .btn-scan {
+            padding: 20px 40px;
+            font-size: 18px;
+        }
+        .phone-mode .header .stats { display: none; }
+        .phone-mode .header .room-info .code { color: #34d399; }
+        .phone-mode .header h1 { font-size: 18px; }
+
+        /* --- ТОАСТ --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2638;
+            border: 1px solid #7c3aed;
+            padding: 14px 30px;
+            border-radius: 16px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { border-color: #34d399; }
+        .toast.error { border-color: #f87171; }
+        .toast.info { border-color: #60a5fa; }
+
+        /* --- ОБЩИЕ --- */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="app" id="app">
+    <!-- ХЕДЕР -->
+    <div class="header">
+        <h1 id="mainTitle">📦 ПВЗ · Выдача заказов</h1>
+        <span class="phase phase-prep" id="phaseBadge">📋 Подготовка</span>
+        <div class="room-info">
+            <span>🏠 Комната:</span>
+            <span class="code" id="roomCode">—</span>
+        </div>
+        <div class="tsd-status" id="tsdStatus">
+            <span class="dot dot-off" id="tsdDot"></span>
+            <span id="tsdLabel">ТСД не подключён</span>
+        </div>
+        <div class="stats">
+            <span>📋 <strong id="totalOrders">0</strong></span>
+            <span>✅ <strong id="readyOrders">0</strong> готовы</span>
+            <span>📱 <strong id="devicesConnected">0</strong> ТСД</span>
+        </div>
+    </div>
+
+    <!-- КНОПКИ УПРАВЛЕНИЯ -->
+    <div class="controls">
+        <button class="btn-generate" onclick="generateOrders()" id="generateBtn">➕ Сгенерировать заказы</button>
+        <button class="btn-start" onclick="startGame()" id="startBtn" disabled>🚀 Начать выдачу</button>
+        <button class="btn-reset" onclick="resetAll()">🔄 Сброс</button>
+    </div>
+
+    <!-- QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА -->
+    <div class="qr-connect-section" id="qrConnectSection">
+        <h2>📱 ПОДКЛЮЧИ ТЕЛЕФОН КАК ТСД</h2>
+        <div class="sub">Отсканируй QR-код телефоном, чтобы использовать его как сканер</div>
+        <div class="connect-container">
+            <div class="qr-box">
+                <div id="connect-qrcode"></div>
+            </div>
+            <div class="connect-info">
+                <div class="label">Код комнаты</div>
+                <div class="value" id="connectRoomCode">—</div>
+                <div class="label" style="margin-top: 10px;">Статус</div>
+                <div class="status-text" id="connectStatus">⏳ Ожидание подключения...</div>
+                <div style="margin-top: 15px; font-size: 13px; color: #4a5568;">
+                    Или введи код вручную
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR-КОД ДЛЯ КЛИЕНТА -->
+    <div class="qr-client-section" id="qrClientSection">
+        <h2>📱 КЛИЕНТ ПРИШЁЛ ЗА ЗАКАЗОМ</h2>
+        <div class="sub">Покажи QR-код клиенту или отсканируй его своим ТСД</div>
+        
+        <div class="qr-container">
+            <div class="qr-box" id="clientQrBox">
+                <div id="client-qrcode"></div>
+            </div>
+            <div class="order-info" id="clientOrderInfo">
+                <div class="label">Заказ</div>
+                <div class="value" id="clientOrderId">—</div>
+                <div class="items" id="clientOrderItems">Нет активных заказов</div>
+            </div>
+        </div>
+        
+        <div class="controls-qr">
+            <button class="btn-next-client" onclick="nextClient()" id="nextClientBtn" disabled>➡️ Следующий клиент</button>
+        </div>
+    </div>
+
+    <!-- СКАНЕР (ТСД) -->
+    <div class="scanner-panel" id="scannerPanel">
+        <div class="top">
+            <span class="icon">📷</span>
+            <span class="label">ТСД СКАНЕР (выдача):</span>
+            <input type="text" id="scanInput" placeholder="Отсканируй QR-код клиента" autofocus>
+            <button class="btn-scan" onclick="handleScan()" id="scanBtn">🔍 Сканировать</button>
+        </div>
+        <div class="status-msg" id="scanStatus">⏳ Ожидание сканирования...</div>
+    </div>
+
+    <!-- СПИСОК ЗАКАЗОВ -->
+    <div class="grid" id="mainGrid">
+        <div class="panel">
+            <h2>📋 Заказы <span class="count" id="orderCount">0</span></h2>
+            <div id="orderList"></div>
+        </div>
+        <div class="panel" id="detailPanel">
+            <h2>📦 Детали <span class="count" id="detailOrderId">—</span></h2>
+            <div id="detailContent">
+                <div style="color: #4a5568; text-align: center; padding: 40px 0;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">👆</div>
+                    Выберите заказ для деталей
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ТОАСТ -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ============================================================
+//  🔥 FIREBASE НАСТРОЙКИ
+// ============================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyCksMAKAI1U2gXRHefO0vAZYbY4Y6ES1Sg",
+    authDomain: "keys-c7467.firebaseapp.com",
+    databaseURL: "https://keys-c7467-default-rtdb.firebaseio.com",
+    projectId: "keys-c7467",
+    storageBucket: "keys-c7467.firebasestorage.app",
+    messagingSenderId: "573161424340",
+    appId: "1:573161424340:web:6fe203312d2a18079f0241"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// ============================================================
+//  ДАННЫЕ
+// ============================================================
+const PRODUCTS = [
+    { name: 'Кроссовки Nike Air', code: 'NK-001' },
+    { name: 'Футболка Adidas', code: 'AD-002' },
+    { name: 'Джинсы Levi\'s', code: 'LV-003' },
+    { name: 'Куртка Columbia', code: 'CL-004' },
+    { name: 'Рюкзак Herschel', code: 'HR-005' },
+    { name: 'Носки Stance', code: 'ST-006' },
+    { name: 'Кепка New Era', code: 'NE-007' },
+    { name: 'Шорты Puma', code: 'PU-008' },
+    { name: 'Толстовка Champion', code: 'CH-009' },
+    { name: 'Сумка Fjallraven', code: 'FJ-010' },
+];
+
+let orders = [];
+let gameActive = false;
+let roomId = null;
+let tsdConnected = false;
+let qrConnectInstance = null;
+let qrClientInstance = null;
+let isPhoneMode = false;
+let currentReadyOrder = null;
+
+// ============================================================
+//  ГЕНЕРАЦИЯ ЗАКАЗОВ
+// ============================================================
+function generateOrders() {
+    if (gameActive) {
+        showToast('❌ Нельзя генерировать во время выдачи!', 'error');
+        return;
+    }
+    
+    const count = 4 + Math.floor(Math.random() * 5);
+    const newOrders = [];
+    
+    for (let i = 0; i < count; i++) {
+        const itemsCount = 2 + Math.floor(Math.random() * 3);
+        const shuffled = [...PRODUCTS].sort(() => Math.random() - 0.5);
+        const items = shuffled.slice(0, itemsCount).map(p => ({
+            ...p,
+            picked: false
+        }));
+        
+        newOrders.push({
+            id: `WB-${1000 + Math.floor(Math.random() * 9000)}`,
+            items: items,
+            status: 'pending',
+            pickedCount: 0
+        });
+    }
+    
+    orders = newOrders;
+    currentReadyOrder = null;
+    renderAll();
+    document.getElementById('startBtn').disabled = false;
+    showToast(`✅ Сгенерировано ${count} заказов`, 'success');
+}
+
+// ============================================================
+//  СТАРТ ИГРЫ
+// ============================================================
+function startGame() {
+    if (orders.length === 0) {
+        showToast('❌ Сначала сгенерируй заказы!', 'error');
+        return;
+    }
+    
+    // Проверяем, все ли заказы собраны
+    const notReady = orders.filter(o => o.status !== 'ready' && o.status !== 'done');
+    if (notReady.length > 0) {
+        showToast(`⚠️ ${notReady.length} заказов ещё не собраны. Собери их сначала!`, 'error');
+        return;
+    }
+    
+    // Проверяем, есть ли хоть один готовый заказ
+    const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
+    if (readyOrders.length === 0) {
+        showToast('❌ Нет заказов готовых к выдаче!', 'error');
+        return;
+    }
+    
+    gameActive = true;
+    roomId = Math.floor(1000 + Math.random() * 9000);
+    
+    // Сохраняем в Firebase
+    const gameData = {
+        roomId: roomId,
+        active: true,
+        orders: orders,
+        tsdConnected: false
+    };
+    
+    database.ref('game').set(gameData);
+    
+    // Обновляем интерфейс
+    document.getElementById('roomCode').textContent = roomId;
+    document.getElementById('phaseBadge').textContent = '⏳ Ожидание ТСД';
+    document.getElementById('phaseBadge').className = 'phase phase-waiting';
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('generateBtn').disabled = true;
+    
+    // Показываем QR для подключения телефона
+    showConnectQR();
+    
+    // Слушаем изменения из Firebase
+    database.ref('game').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.orders) {
+                orders = data.orders;
+                renderAll();
+                checkGameComplete();
+            }
+            if (data.tsdConnected !== undefined) {
+                tsdConnected = data.tsdConnected;
+                updateTSDStatus();
+                if (tsdConnected) {
+                    // ТСД подключился! Скрываем QR и показываем выдачу
+                    hideConnectQR();
+                    showClientQR();
+                    document.getElementById('phaseBadge').textContent = '🎯 Выдача';
+                    document.getElementById('phaseBadge').className = 'phase phase-game';
+                    showToast('📱 ТСД подключён! Можно выдавать заказы', 'success');
+                }
+            }
+        }
+    });
+    
+    showToast(`🚀 Игра началась! Комната: ${roomId}`, 'success');
+}
+
+// ============================================================
+//  QR ДЛЯ ПОДКЛЮЧЕНИЯ ТЕЛЕФОНА
+// ============================================================
+function showConnectQR() {
+    const section = document.getElementById('qrConnectSection');
+    section.classList.remove('hidden');
+    section.classList.add('show');
+    
+    document.getElementById('connectRoomCode').textContent = roomId;
+    document.getElementById('connectStatus').textContent = '⏳ Ожидание подключения...';
+    document.getElementById('connectStatus').className = 'status-text';
+    
+    // Генерируем QR-код для подключения
+    const qrContainer = document.getElementById('connect-qrcode');
+    qrContainer.innerHTML = '';
+    
+    const connectUrl = window.location.href.split('?')[0] + '?phone=true&room=' + roomId;
+    
+    if (typeof QRCode !== 'undefined') {
+        qrConnectInstance = new QRCode(qrContainer, {
+            text: connectUrl,
+            width: 200,
+            height: 200,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } else {
+        qrContainer.innerHTML = `
+            <div style="width:200px;height:200px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:8px;">
+                <div style="font-size:48px;">📱</div>
+                <div style="font-size:14px;font-weight:700;font-family:monospace;">${connectUrl}</div>
+            </div>
+        `;
+    }
+}
+
+function hideConnectQR() {
+    const section = document.getElementById('qrConnectSection');
+    section.classList.remove('show');
+    section.classList.add('hidden');
+    // Очищаем QR код
+    if (qrConnectInstance) {
+        qrConnectInstance.clear();
+        qrConnectInstance = null;
+    }
+}
+
+// ============================================================
+//  СТАТУС ТСД
+// ============================================================
+function updateTSDStatus() {
+    const dot = document.getElementById('tsdDot');
+    const label = document.getElementById('tsdLabel');
+    const count = document.getElementById('devicesConnected');
+    
+    if (tsdConnected) {
+        dot.className = 'dot dot-on';
+        label.textContent = '✅ ТСД подключён';
+        count.textContent = '1';
+    } else {
+        dot.className = 'dot dot-off';
+        label.textContent = '⏳ ТСД не подключён';
+        count.textContent = '0';
+    }
+}
+
+// ============================================================
+//  ПОКАЗАТЬ QR КЛИЕНТА
+// ============================================================
+function showClientQR() {
+    const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
+    
+    if (readyOrders.length === 0 || !tsdConnected) {
+        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('nextClientBtn').disabled = true;
+        return;
+    }
+    
+    // Берём первый готовый заказ    currentReadyOrder = readyOrders[0];
+    const order = currentReadyOrder;
+    
+    document.getElementById('qrClientSection').classList.add('show');
+    document.getElementById('clientOrderId').textContent = order.id;
+    document.getElementById('clientOrderItems').innerHTML = order.items.map(i => 
+        `<span>${i.name}</span>`
+    ).join('');
+    document.getElementById('clientQrBox').classList.add('active');
+    document.getElementById('nextClientBtn').disabled = false;
+    
+    // Генерируем QR-код для клиента
+    const qrContainer = document.getElementById('client-qrcode');
+    qrContainer.innerHTML = '';
+    
+    if (typeof QRCode !== 'undefined') {
+        qrClientInstance = new QRCode(qrContainer, {
+            text: order.id,
+            width: 200,
+            height: 200,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } else {
+        qrContainer.innerHTML = `
+            <div style="width:200px;height:200px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:8px;">
+                <div style="font-size:48px;">📱</div>
+                <div style="font-size:20px;font-weight:700;font-family:monospace;">${order.id}</div>
+            </div>
+        `;
+    }
+    
+    document.getElementById('scanStatus').textContent = `📱 Ожидает сканирования: ${order.id}`;
+    document.getElementById('scanStatus').className = 'status-msg info';
+}
+
+// ============================================================
+//  СЛЕДУЮЩИЙ КЛИЕНТ
+// ============================================================
+function nextClient() {
+    if (!tsdConnected) {
+        showToast('❌ ТСД не подключён!', 'error');
+        return;
+    }
+    
+    const readyOrders = orders.filter(o => o.status === 'ready' && o.status !== 'done');
+    if (readyOrders.length === 0) {
+        showToast('❌ Нет заказов для выдачи', 'error');
+        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('nextClientBtn').disabled = true;
+        return;
+    }
+    
+    // Очищаем старый QR
+    if (qrClientInstance) {
+        qrClientInstance.clear();
+        qrClientInstance = null;
+    }
+    document.getElementById('client-qrcode').innerHTML = '';
+    
+    showClientQR();
+}
+
+// ============================================================
+//  СКАНИРОВАНИЕ (ВЫДАЧА)
+// ============================================================
+function handleScan() {
+    const input = document.getElementById('scanInput');
+    const code = input.value.trim().toUpperCase();
+    
+    if (!code) {
+        showToast('❌ Отсканируй QR-код клиента', 'error');
+        return;
+    }
+    
+    if (!gameActive) {
+        showToast('❌ Выдача не активна! Нажми "Начать выдачу"', 'error');
+        input.value = '';
+        return;
+    }
+    
+    if (!tsdConnected) {
+        showToast('❌ ТСД не подключён!', 'error');
+        input.value = '';
+        return;
+    }
+    
+    // Ищем заказ по коду
+    const order = orders.find(o => o.id === code);
+    
+    if (!order) {
+        showToast(`❌ Заказ ${code} не найден`, 'error');
+        document.getElementById('scanStatus').textContent = `❌ ${code} - не найден`;
+        document.getElementById('scanStatus').className = 'status-msg error';
+        input.value = '';
+        return;
+    }
+    
+    if (order.status === 'done') {
+        showToast(`❌ Заказ ${code} уже выдан`, 'error');
+        document.getElementById('scanStatus').textContent = `❌ ${code} - уже выдан`;
+        document.getElementById('scanStatus').className = 'status-msg error';
+        input.value = '';
+        return;
+    }
+    
+    if (order.status !== 'ready') {
+        showToast(`❌ Заказ ${code} ещё не готов к выдаче`, 'error');
+        document.getElementById('scanStatus').textContent = `❌ ${code} - ещё не готов`;
+        document.getElementById('scanStatus').className = 'status-msg error';
+        input.value = '';
+        return;
+    }
+    
+    // ВЫДАЁМ ЗАКАЗ!
+    order.status = 'done';
+    database.ref('game/orders').set(orders);
+    
+    document.getElementById('scanStatus').textContent = `✅ Заказ ${code} ВЫДАН клиенту!`;
+    document.getElementById('scanStatus').className = 'status-msg success';
+    
+    showToast(`✅ Заказ ${code} выдан!`, 'success');
+    
+    input.value = '';
+    renderAll();
+    checkGameComplete();
+    
+    // Показываем следующего клиента
+    setTimeout(() => {
+        if (gameActive) {
+            showClientQR();
+        }
+    }, 500);
+}
+
+// ============================================================
+//  ПРОВЕРКА ЗАВЕРШЕНИЯ
+// ============================================================
+function checkGameComplete() {
+    const allDone = orders.every(o => o.status === 'done');
+    if (allDone && orders.length > 0 && gameActive) {
+        document.getElementById('phaseBadge').textContent = '🏆 ВСЕ ЗАКАЗЫ ВЫДАНЫ!';
+        document.getElementById('phaseBadge').className = 'phase phase-done';
+        document.getElementById('qrClientSection').classList.remove('show');
+        document.getElementById('nextClientBtn').disabled = true;
+        document.getElementById('scanStatus').textContent = '🏆 Все заказы выданы!';
+        document.getElementById('scanStatus').className = 'status-msg success';
+        document.getElementById('scanBtn').disabled = true;
+        document.getElementById('scanInput').disabled = true;
+        showToast('🏆 ПОЗДРАВЛЯЮ! Все заказы выданы клиентам!', 'success');
+        gameActive = false;
+        database.ref('game/active').set(false);
+        database.ref('game/tsdConnected').set(false);
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('generateBtn').disabled = false;
+    }
+}
+
+// ============================================================
+//  ОТОБРАЖЕНИЕ
+// ============================================================
+function renderAll() {
+    renderStats();
+    renderOrders();
+}
+
+function renderStats() {
+    document.getElementById('totalOrders').textContent = orders.length;
+    const ready = orders.filter(o => o.status === 'ready' && o.status !== 'done').length;
+    document.getElementById('readyOrders').textContent = ready;
+    document.getElementById('orderCount').textContent = orders.length;
+}
+
+function renderOrders() {
+    const container = document.getElementById('orderList');
+    
+    if (orders.length === 0) {
+        container.innerHTML = `
+            <div style="color: #4a5568; text-align: center; padding: 30px 0;">
+                <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
+                Нет заказов.<br>Нажми "Сгенерировать заказы"
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = orders.map(order => {
+        const total = order.items.length;
+        const picked = order.items.filter(i => i.picked).length;
+        const progress = total > 0 ? (picked / total * 100) : 0;
+        
+        const statusMap = {
+            'pending': '⏳ Ожидает сборки',
+            'picking': '🔄 Собирается',
+            'ready': '✅ Готов к выдаче',
+            'done': '✅ Выдан'
+        };
+        
+        const statusClass = {
+            'pending': 'status-pending',
+            'picking': 'status-picking',
+            'ready': 'status-ready',
+            'done': 'status-done'
+        };
+        
+        return `
+            <div class="order-card" onclick="showDetail('${order.id}')">
+                <div class="row">
+                    <span class="id">${order.id}</span>
+                    <span class="status ${statusClass[order.status]}">${statusMap[order.status] || order.status}</span>
+                </div>
+                <div class="items">
+                    ${order.items.map(item => `
+                        <span class="item ${item.picked ? 'picked' : ''}">${item.name}</span>
+                    `).join('')}
+                </div>
+                <div class="progress">
+                    <div class="fill" style="width: ${progress}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showDetail(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    
+    document.getElementById('detailOrderId').textContent = order.id;
+    const container = document.getElementById('detailContent');
+    
+    container.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 14px; color: #a0aec0;">Статус: 
+                <span style="font-weight: 600; color: #fff;">${order.status === 'done' ? '✅ Выдан' : order.status === 'ready' ? '🟢 Готов к выдаче' : order.status === 'picking' ? '🔄 Собирается' : '⏳ Ожидает'}</span>
+            </div>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 14px; color: #a0aec0; margin-bottom: 8px;">Товары в заказе:</div>
+            ${order.items.map(item => `
+                <div style="display:flex; justify-content:space-between; padding: 6px 0; border-bottom: 1px solid #1f2638;">
+                    <span>${item.name}</span>
+                    <span style="${item.picked ? 'color: #34d399;' : 'color: #f87171;'}">${item.picked ? '✅ Собран' : '⏳ Ожидает'}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div style="padding: 10px; background: #1f2638; border-radius: 8px; font-size: 13px; color: #a0aec0;">
+            <div>Код заказа: <span style="font-family: monospace; color: #a855f7; font-weight: 700;">${order.id}</span></div>
+            <div style="margin-top: 4px;">Товаров: ${order.items.length} | Собрано: ${order.items.filter(i => i.picked).length}</div>
+        </div>
+    `;
+}
+
+// ============================================================
+//  СБРОС
+// ============================================================
+function resetAll() {
+    if (gameActive) {
+        if (!confirm('Остановить выдачу и сбросить всё?')) return;
+    }
+    
+    orders = [];
+    gameActive = false;
+    roomId = null;
+    tsdConnected = false;
+    currentReadyOrder = null;
+    
+    // Очищаем QR
+    if (qrConnectInstance) {
+        qrConnectInstance.clear();
+        qrConnectInstance = null;
+    }
+    if (qrClientInstance) {
+        qrClientInstance.clear();
+        qrClientInstance = null;
+    }
+    
+    document.getElementById('roomCode').textContent = '—';
+    document.getElementById('phaseBadge').textContent = '📋 Подготовка';
+    document.getElementById('phaseBadge').className = 'phase phase-prep';
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('scanBtn').disabled = false;
+    document.getElementById('scanInput').disabled = false;
+    document.getElementById('qrConnectSection').classList.remove('show');
+    document.getElementById('qrConnectSection').classList.add('hidden');
+    document.getElementById('qrClientSection').classList.remove('show');
+    document.getElementById('nextClientBtn').disabled = true;
+    document.getElementById('client-qrcode').innerHTML = '';
+    document.getElementById('connect-qrcode').innerHTML = '';
+    document.getElementById('scanStatus').textContent = '⏳ Ожидание сканирования...';
+    document.getElementById('scanStatus').className = 'status-msg';
+    document.getElementById('scanInput').value = '';
+    
+    updateTSDStatus();
+    
+    database.ref('game').remove();
+    renderAll();
+    showToast('🔄 Всё сброшено', 'info');
+}
+
+// ============================================================
+//  ТОАСТ
+// ============================================================
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.classList.add('show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3500);
+}
+
+// ============================================================
+//  РЕЖИМ ТЕЛЕФОНА (ТСД)
+// ============================================================
+function checkPhoneMode() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('phone') === 'true') {
+        isPhoneMode = true;
+        document.body.classList.add('phone-mode');
+        document.getElementById('mainTitle').textContent = '📱 ТСД · Выдача';
+        document.getElementById('phaseBadge').textContent = '📱 ТСД режим';
+        document.getElementById('scanInput').placeholder = 'Сканируй QR-код клиента';
+        
+        // Подключаемся к комнате
+        const room = params.get('room');
+        if (room) {
+            document.getElementById('roomCode').textContent = room;
+            // Подключаем ТСД к Firebase
+            database.ref('game').update({
+                tsdConnected: true
+            });
+            
+            // Слушаем заказы
+            database.ref('game/orders').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    orders = data;
+                    renderStats();
+                    renderOrders();
+                }
+            });
+            
+            // Слушаем статус игры
+            database.ref('game/active').on('value', (snapshot) => {
+                const active = snapshot.val();
+                if (active === false) {
+                    showToast('🏆 Игра завершена!', 'success');
+                }
+            });
+            
+            showToast('📱 ТСД подключён к комнате ' + room, 'success');
+        }
+    }
+}
+
+// ============================================================
+//  ЗАПУСК
+// ============================================================
+checkPhoneMode();
+renderAll();
+updateTSDStatus();
+
+console.log('✅ ПВЗ Симулятор загружен!');
+console.log('📱 Для подключения телефона добавь ?phone=true&room=XXXX');
+</script>
+</body>
+</html>
